@@ -1,0 +1,70 @@
+name: adr_mobile
+description: "Aplikasi mobile monitoring ADR - Automated Deformation Recording."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # ── HTTP & Networking ─────────────────────────────────
+  dio: ^5.8.0+1
+  dio_smart_retry: ^6.0.0
+
+  # ── Auth & Secure Storage ────────────────────────────
+  flutter_secure_storage: ^9.2.4
+
+  # ── State Management ─────────────────────────────────
+  flutter_riverpod: ^2.6.1
+
+  # ── Navigation ───────────────────────────────────────
+  go_router: ^14.8.1
+
+  # ── Peta / Map ───────────────────────────────────────
+  flutter_map: ^8.1.1
+  latlong2: ^0.9.1
+
+  # ── Chart / Grafik Sensor ────────────────────────────
+  fl_chart: ^0.70.2
+  syncfusion_flutter_charts: ^33.2.5
+
+  # ── WebView (Visualisasi 3D) ──────────────────────────
+  webview_flutter: ^4.10.0
+
+  # ── Image ────────────────────────────────────────────
+  cached_network_image: ^3.4.1
+
+  # ── Utility ──────────────────────────────────────────
+  intl: ^0.20.2
+  shared_preferences: ^2.5.3
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.2.4
+  shimmer: ^3.0.0
+  path_provider: ^2.1.5
+  share_plus: ^12.0.2
+  package_info_plus: ^9.0.1
+  url_launcher: ^6.3.2
+
+  # ── Firebase (Notifikasi) ────────────────────────────
+  firebase_core: ^4.7.0
+  firebase_messaging: ^16.2.0
+  flutter_local_notifications: ^21.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/onboarding/
+    - assets/images/beranda/
+    - assets/images/rts/

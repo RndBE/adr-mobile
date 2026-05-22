@@ -96,37 +96,19 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Padding(
                         padding: EdgeInsets.fromLTRB(
                           24,
-                          compact ? 10 : 18,
+                          compact ? 12 : 24,
                           24,
-                          compact ? 8 : 14,
+                          compact ? 12 : 20,
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Flexible(
                               child: Image.asset(
+                                key: const Key('login-hero-image'),
                                 'assets/images/mobile.png',
                                 fit: BoxFit.contain,
-                                height: compact ? 190 : 250,
-                              ),
-                            ),
-                            SizedBox(height: compact ? 10 : 16),
-                            Text(
-                              'ADR Monitor',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: compact ? 20 : 24,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Automated Deformation Recording',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white.withValues(alpha: 0.76),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                                height: compact ? 250 : 320,
                               ),
                             ),
                           ],
@@ -187,14 +169,15 @@ class _LoginFormPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: const Key('login-form-panel'),
       width: double.infinity,
-      constraints: const BoxConstraints(maxHeight: 520),
+      constraints: const BoxConstraints(minHeight: 380, maxHeight: 455),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
+        padding: const EdgeInsets.fromLTRB(18, 20, 18, 14),
         child: Form(
           key: formKey,
           child: Column(
@@ -204,8 +187,8 @@ class _LoginFormPanel extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
                       color: AppColors.primarySurface,
                       borderRadius: BorderRadius.circular(14),
@@ -224,7 +207,7 @@ class _LoginFormPanel extends StatelessWidget {
                         Text(
                           'Masuk ke Akun',
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: 21,
                             fontWeight: FontWeight.w800,
                             color: AppColors.primaryDark,
                           ),
@@ -243,7 +226,7 @@ class _LoginFormPanel extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               if (errorMsg != null) ...[
                 _LoginErrorBanner(message: errorMsg!),
                 const SizedBox(height: 14),
@@ -259,7 +242,7 @@ class _LoginFormPanel extends StatelessWidget {
                     ? 'Nama Pengguna tidak boleh kosong'
                     : null,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: passCtrl,
                 obscureText: obscure,
@@ -281,10 +264,10 @@ class _LoginFormPanel extends StatelessWidget {
                     ? 'Kata Sandi tidak boleh kosong'
                     : null,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 48,
                 child: ElevatedButton(
                   onPressed: loading ? null : onLogin,
                   style: ElevatedButton.styleFrom(
@@ -322,22 +305,22 @@ class _LoginFormPanel extends StatelessWidget {
                         ),
                 ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset('assets/images/logo_be2.png', height: 28),
+                  Image.asset('assets/images/logo_be2.png', height: 30),
                   Container(
                     width: 1,
-                    height: 24,
+                    height: 26,
                     margin: const EdgeInsets.symmetric(horizontal: 14),
                     color: AppColors.divider,
                   ),
-                  Image.asset('assets/images/logostesy.png', height: 28),
+                  Image.asset('assets/images/logostesy.png', height: 30),
                 ],
               ),
               if (version.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Center(
                   child: Text(
                     version,

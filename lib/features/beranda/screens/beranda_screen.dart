@@ -12,7 +12,6 @@ import '../../../shared/widgets/skeleton.dart';
 import '../data/beranda_repository.dart';
 import '../models/beranda_dashboard_status.dart';
 import '../models/beranda_header_layout.dart';
-import '../models/beranda_metric_formatter.dart';
 import '../widgets/rts_status_summary_card.dart';
 
 class BerandaScreen extends StatefulWidget {
@@ -285,48 +284,8 @@ class _BerandaScreenState extends State<BerandaScreen> {
                         tiltXText: _metric(rts.tiltX, fraction: 2),
                         tiltYText: _metric(rts.tiltY, fraction: 2),
                       ),
-                      const SizedBox(height: 14),
-                      GridView.count(
-                        padding: EdgeInsets.zero,
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.28,
-                        children: [
-                          MetricTile(
-                            label: 'Humidity',
-                            value: formatBerandaSensorMetric(rts.humidity),
-                            unit: '%',
-                            icon: Icons.water_drop_outlined,
-                            color: AppColors.info,
-                          ),
-                          MetricTile(
-                            label: 'Battery',
-                            value: formatBerandaSensorMetric(rts.battery),
-                            unit: 'Volt',
-                            icon: Icons.battery_full_rounded,
-                            color: AppColors.success,
-                          ),
-                          MetricTile(
-                            label: 'Temperature',
-                            value: formatBerandaSensorMetric(rts.temperature),
-                            unit: 'C',
-                            icon: Icons.thermostat_rounded,
-                            color: AppColors.danger,
-                          ),
-                          MetricTile(
-                            label: 'Power RTS',
-                            value: formatBerandaSensorMetric(rts.powerRts),
-                            unit: 'Volt',
-                            icon: Icons.bolt_rounded,
-                            color: AppColors.accent,
-                          ),
-                        ],
-                      ),
                     ],
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 18),
                     const _SectionHeader(
                       title: 'Menu Utama',
                       subtitle: 'Akses fitur monitoring ADR',

@@ -42,7 +42,7 @@ class KontrolRtsStatus {
     }
 
     return const KontrolRtsStatus(
-      label: 'RTS Off',
+      label: 'RTS Disconnected',
       actionLabel: 'Power RTS belum aktif',
       pillLabel: 'Off',
       color: AppColors.danger,

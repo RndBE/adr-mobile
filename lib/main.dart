@@ -100,7 +100,9 @@ class AdrMobileApp extends StatelessWidget {
 // ─── Splash Screen ───────────────────────────────────────────────────────────
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final bool startNavigation;
+
+  const SplashScreen({super.key, this.startNavigation = true});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -128,7 +130,9 @@ class _SplashScreenState extends State<SplashScreen>
       end: 1.0,
     ).animate(CurvedAnimation(parent: _ctrl, curve: const Interval(0.0, 0.5)));
     _ctrl.forward();
-    _init();
+    if (widget.startNavigation) {
+      _init();
+    }
   }
 
   Future<void> _init() async {
@@ -157,6 +161,9 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final height = MediaQuery.sizeOf(context).height;
+    final compact = height < 720;
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -181,44 +188,31 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 96,
-                        height: 96,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: const Icon(
-                          Icons.radar_rounded,
-                          size: 52,
-                          color: Colors.white,
-                        ),
+                      Image.asset(
+                        'assets/images/mobile.png',
+                        fit: BoxFit.contain,
+                        height: compact ? 190 : 250,
                       ),
-                      const SizedBox(height: 24),
-                      const Text(
+                      SizedBox(height: compact ? 10 : 16),
+                      Text(
                         'ADR Monitor',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 28,
+                          fontSize: compact ? 20 : 24,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         'Automated Deformation Recording',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.75),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0.3,
+                          color: Colors.white.withValues(alpha: 0.76),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(height: 56),
+                      SizedBox(height: compact ? 40 : 56),
                       SizedBox(
                         width: 28,
                         height: 28,

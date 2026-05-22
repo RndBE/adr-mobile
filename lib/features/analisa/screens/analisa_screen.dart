@@ -9,6 +9,7 @@ import '../../beranda/data/beranda_repository.dart';
 import '../data/analisa_repository.dart';
 import '../models/analisa_data_cache.dart';
 import '../models/analisa_dashboard_summary.dart';
+import '../models/analisa_dialog_layout.dart';
 import '../models/analisa_month_picker.dart';
 import '../models/analisa_range_picker.dart';
 import '../models/analisa_sensor_history_query.dart';
@@ -706,9 +707,11 @@ class _MonthPickerDialogState extends State<_MonthPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final title = formatAnalisaMonthTitle(year: _year, month: _month);
-    final dialogWidth = (MediaQuery.sizeOf(context).width - 48)
-        .clamp(0.0, 280.0)
-        .toDouble();
+    final dialogWidth = resolveAnalisaDialogWidth(
+      screenWidth: MediaQuery.sizeOf(context).width,
+      horizontalInset: 48,
+      maxWidth: 280,
+    );
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
@@ -809,53 +812,12 @@ class _MonthPickerDialogState extends State<_MonthPickerDialog> {
                                 setState(() => _month = month),
                           ),
                           const SizedBox(height: 18),
-                          Row(
-                            children: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                style: TextButton.styleFrom(
-                                  backgroundColor: const Color(0xFFE9EFF6),
-                                  foregroundColor: AppColors.textSecondary,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 18,
-                                    vertical: 10,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(22),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Batal',
-                                  style: TextStyle(fontWeight: FontWeight.w800),
-                                ),
-                              ),
-                              const Spacer(),
-                              ElevatedButton(
-                                onPressed: () => Navigator.pop(
-                                  context,
-                                  buildAnalisaMonthDate(
-                                    year: _year,
-                                    month: _month,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 22,
-                                    vertical: 11,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(22),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Pilih',
-                                  style: TextStyle(fontWeight: FontWeight.w900),
-                                ),
-                              ),
-                            ],
+                          _DialogActionRow(
+                            onCancel: () => Navigator.pop(context),
+                            onConfirm: () => Navigator.pop(
+                              context,
+                              buildAnalisaMonthDate(year: _year, month: _month),
+                            ),
                           ),
                         ],
                       ),
@@ -983,6 +945,79 @@ class _MonthTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _DialogActionRow extends StatelessWidget {
+  final VoidCallback onCancel;
+  final VoidCallback onConfirm;
+
+  const _DialogActionRow({required this.onCancel, required this.onConfirm});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: onCancel,
+              style: TextButton.styleFrom(
+                backgroundColor: const Color(0xFFE9EFF6),
+                foregroundColor: AppColors.textSecondary,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(22),
+                ),
+              ),
+              child: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Batal',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: ElevatedButton(
+              onPressed: onConfirm,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 11,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(22),
+                ),
+              ),
+              child: const FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'Pilih',
+                  style: TextStyle(fontWeight: FontWeight.w900),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1286,9 +1321,11 @@ class _RangePickerDialogState extends State<_RangePickerDialog> {
       year: _visibleMonth.year,
       month: _visibleMonth.month,
     );
-    final dialogWidth = (MediaQuery.sizeOf(context).width - 32)
-        .clamp(0.0, 330.0)
-        .toDouble();
+    final dialogWidth = resolveAnalisaDialogWidth(
+      screenWidth: MediaQuery.sizeOf(context).width,
+      horizontalInset: 32,
+      maxWidth: 330,
+    );
 
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -1435,50 +1472,12 @@ class _RangePickerDialogState extends State<_RangePickerDialog> {
                             onSelected: _selectDate,
                           ),
                           const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                style: TextButton.styleFrom(
-                                  backgroundColor: const Color(0xFFE9EFF6),
-                                  foregroundColor: AppColors.textSecondary,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 20,
-                                    vertical: 11,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(22),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Batal',
-                                  style: TextStyle(fontWeight: FontWeight.w800),
-                                ),
-                              ),
-                              const Spacer(),
-                              ElevatedButton(
-                                onPressed: () => Navigator.pop(
-                                  context,
-                                  DateTimeRange(start: _start, end: _end),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 22,
-                                    vertical: 11,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(22),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Pilih',
-                                  style: TextStyle(fontWeight: FontWeight.w900),
-                                ),
-                              ),
-                            ],
+                          _DialogActionRow(
+                            onCancel: () => Navigator.pop(context),
+                            onConfirm: () => Navigator.pop(
+                              context,
+                              DateTimeRange(start: _start, end: _end),
+                            ),
                           ),
                         ],
                       ),

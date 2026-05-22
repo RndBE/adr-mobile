@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/theme/app_theme.dart';
+import '../../../shared/widgets/dashboard_widgets.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../data/hasil_repository.dart';
+import '../models/hasil_report_summary.dart';
 
 class DetailHasilScreen extends StatefulWidget {
   final String idLog;
@@ -52,15 +55,19 @@ class _DetailHasilScreenState extends State<DetailHasilScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.bgLight,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Detail Pengukuran',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            Text(widget.tanggal,
-                style:
-                    const TextStyle(fontSize: 11, color: Colors.white70)),
+            const Text(
+              'Detail Pengukuran',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            Text(
+              widget.tanggal,
+              style: const TextStyle(fontSize: 11, color: Colors.white70),
+            ),
           ],
         ),
         leading: const BackButton(color: Colors.white),
@@ -76,17 +83,31 @@ class _DetailHasilScreenState extends State<DetailHasilScreen>
         ),
       ),
       body: _loading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary))
+          ? const SkeletonDetailPage()
           : _data.isEmpty
-              ? _buildEmpty()
-              : TabBarView(
-                  controller: _tabCtrl,
-                  children: [
-                    _EventTab(data: _data),
-                    _HarianTab(data: _data),
-                  ],
+          ? _buildEmpty()
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: _DetailReportHeader(
+                    idLog: widget.idLog,
+                    tanggal: widget.tanggal,
+                    site: widget.site,
+                    summary: DetailHasilReportSummary.fromPrismas(_data),
+                  ),
                 ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabCtrl,
+                    children: [
+                      _EventTab(data: _data),
+                      _HarianTab(data: _data),
+                    ],
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
@@ -95,13 +116,152 @@ class _DetailHasilScreenState extends State<DetailHasilScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.scatter_plot_outlined,
-              size: 56, color: AppColors.textHint),
+          Icon(
+            Icons.scatter_plot_outlined,
+            size: 56,
+            color: AppColors.textHint,
+          ),
           SizedBox(height: 16),
-          Text('Tidak ada data deformasi',
-              style:
-                  TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+          Text(
+            'Tidak ada data deformasi',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _DetailReportHeader extends StatelessWidget {
+  final String idLog;
+  final String tanggal;
+  final String site;
+  final DetailHasilReportSummary summary;
+
+  const _DetailReportHeader({
+    required this.idLog,
+    required this.tanggal,
+    required this.site,
+    required this.summary,
+  });
+
+  Color _siteColor(String value) {
+    switch (value.toLowerCase()) {
+      case 'cpp3':
+      case 'cpp':
+        return AppColors.siteCpp;
+      case 'wp':
+        return AppColors.siteWp;
+      default:
+        return AppColors.siteRd;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _siteColor(site);
+    return AppSurfaceCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(Icons.receipt_long_rounded, color: color, size: 22),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tanggal,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'ID $idLog',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              StatusPill(label: site.toUpperCase(), color: color, subtle: true),
+            ],
+          ),
+          const SizedBox(height: 13),
+          Row(
+            children: [
+              _DetailMini(label: 'Prism', value: '${summary.totalPrism}'),
+              const SizedBox(width: 8),
+              _DetailMini(label: 'Success', value: '${summary.success}'),
+              const SizedBox(width: 8),
+              _DetailMini(label: 'Failed', value: '${summary.failed}'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailMini extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DetailMini({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.bgLight,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -117,9 +277,7 @@ class _EventTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        children: data.map((p) => _EventCard(prisma: p)).toList(),
-      ),
+      child: Column(children: data.map((p) => _EventCard(prisma: p)).toList()),
     );
   }
 }
@@ -156,23 +314,32 @@ class _EventCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: _statusColor.withValues(alpha: 0.08),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(14),
+              ),
             ),
             child: Row(
               children: [
-                Icon(Icons.my_location_rounded,
-                    color: _statusColor, size: 18),
+                Icon(Icons.my_location_rounded, color: _statusColor, size: 18),
                 const SizedBox(width: 8),
-                Text(prisma.namaPrisma,
+                Expanded(
+                  child: Text(
+                    prisma.namaPrisma,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                        color: AppColors.textPrimary)),
-                const Spacer(),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: _statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -180,9 +347,10 @@ class _EventCard extends StatelessWidget {
                   child: Text(
                     prisma.status.toUpperCase(),
                     style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: _statusColor),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: _statusColor,
+                    ),
                   ),
                 ),
               ],
@@ -196,11 +364,11 @@ class _EventCard extends StatelessWidget {
                 // Coordinates section
                 _SectionLabel('Koordinat Awal'),
                 const SizedBox(height: 6),
-                _CoordRow('N₀', prisma.n0, 'E₀', prisma.e0, 'Z₀', prisma.z0),
+                _CoordRow('N0', prisma.n0, 'E0', prisma.e0, 'Z0', prisma.z0),
                 const SizedBox(height: 12),
                 _SectionLabel('Koordinat Akhir'),
                 const SizedBox(height: 6),
-                _CoordRow('N₁', prisma.n1, 'E₁', prisma.e1, 'Z₁', prisma.z1),
+                _CoordRow('N1', prisma.n1, 'E1', prisma.e1, 'Z1', prisma.z1),
                 const SizedBox(height: 12),
 
                 // Displacement section
@@ -213,19 +381,22 @@ class _EventCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Pergeseran',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary)),
+                      const Text(
+                        'Pergeseran',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          _DeltaChip('ΔN', prisma.dn),
+                          _DeltaChip('dN', prisma.dn),
                           const SizedBox(width: 8),
-                          _DeltaChip('ΔE', prisma.de),
+                          _DeltaChip('dE', prisma.de),
                           const SizedBox(width: 8),
-                          _DeltaChip('ΔZ', prisma.dz),
+                          _DeltaChip('dZ', prisma.dz),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -233,11 +404,12 @@ class _EventCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: _InfoRow(
-                                'Linear', '${prisma.linear.toStringAsFixed(3)} m'),
+                              'Linear',
+                              '${prisma.linear.toStringAsFixed(3)} m',
+                            ),
                           ),
                           Expanded(
-                            child: _InfoRow(
-                                'Arah', prisma.arahPergeseran),
+                            child: _InfoRow('Arah', prisma.arahPergeseran),
                           ),
                         ],
                       ),
@@ -263,9 +435,7 @@ class _HarianTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        children: data.map((p) => _HarianCard(prisma: p)).toList(),
-      ),
+      child: Column(children: data.map((p) => _HarianCard(prisma: p)).toList()),
     );
   }
 }
@@ -302,14 +472,20 @@ class _HarianCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.my_location_rounded,
-                  color: AppColors.primary, size: 18),
+              const Icon(
+                Icons.my_location_rounded,
+                color: AppColors.primary,
+                size: 18,
+              ),
               const SizedBox(width: 8),
-              Text(prisma.namaPrisma,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: AppColors.textPrimary)),
+              Text(
+                prisma.namaPrisma,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -368,19 +544,25 @@ class _StatCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 11, color: AppColors.textSecondary)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(value,
-              style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary)),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
           const SizedBox(height: 6),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
               color: badgeColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(4),
@@ -388,9 +570,10 @@ class _StatCard extends StatelessWidget {
             child: Text(
               badge,
               style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: badgeColor),
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: badgeColor,
+              ),
             ),
           ),
         ],
@@ -407,8 +590,9 @@ class _SparklineWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     if (series.isEmpty) return const SizedBox.shrink();
 
-    final values =
-        series.map((e) => (e['mm'] as num?)?.toDouble() ?? 0.0).toList();
+    final values = series
+        .map((e) => (e['mm'] as num?)?.toDouble() ?? 0.0)
+        .toList();
     final maxVal = values.reduce((a, b) => a > b ? a : b);
     final minVal = values.reduce((a, b) => a < b ? a : b);
     final range = maxVal - minVal == 0 ? 1.0 : maxVal - minVal;
@@ -428,8 +612,11 @@ class _SparklinePainter extends CustomPainter {
   final double range;
   final double min;
 
-  _SparklinePainter(
-      {required this.values, required this.range, required this.min});
+  _SparklinePainter({
+    required this.values,
+    required this.range,
+    required this.min,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -466,12 +653,13 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        text,
-        style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary),
-      );
+    text,
+    style: const TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: AppColors.textSecondary,
+    ),
+  );
 }
 
 class _CoordRow extends StatelessWidget {
@@ -509,16 +697,21 @@ class _CoordCell extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 10, color: AppColors.textSecondary)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 2),
             Text(
               value.toStringAsFixed(4),
               style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
           ],
         ),
@@ -545,16 +738,21 @@ class _DeltaChip extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 10, color: AppColors.textSecondary)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 2),
             Text(
               '${isPos ? '+' : ''}${value.toStringAsFixed(4)}',
               style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: isPos ? AppColors.success : AppColors.danger),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: isPos ? AppColors.success : AppColors.danger,
+              ),
             ),
           ],
         ),
@@ -573,14 +771,18 @@ class _InfoRow extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                fontSize: 10, color: AppColors.textSecondary)),
-        Text(value,
-            style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
       ],
     );
   }

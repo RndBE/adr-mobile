@@ -43,3 +43,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Python Virtual Environments
+.venv*/
+venv*/
+
+# Env files
+.env
+
+# Certificates (IMPORTANT - contains private keys)
+/cert/
+*.pem
+*.crt
+*.key

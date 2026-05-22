@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../shared/theme/app_theme.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../../../core/constants/api_constants.dart';
 
 class Visualisasi3DScreen extends StatefulWidget {
@@ -61,25 +62,7 @@ class _Visualisasi3DScreenState extends State<Visualisasi3DScreen> {
             WebViewWidget(controller: _ctrl),
 
           if (_loading && !_hasError)
-            Container(
-              color: AppColors.bgLight,
-              child: const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: AppColors.primary),
-                    SizedBox(height: 16),
-                    Text(
-                      'Memuat visualisasi 3D...',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            Container(color: AppColors.bgLight, child: const SkeletonWebView()),
         ],
       ),
     );
@@ -105,8 +88,11 @@ class _ErrorView extends StatelessWidget {
                 color: AppColors.dangerLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.wifi_off_rounded,
-                  size: 40, color: AppColors.danger),
+              child: const Icon(
+                Icons.wifi_off_rounded,
+                size: 40,
+                color: AppColors.danger,
+              ),
             ),
             const SizedBox(height: 20),
             const Text(

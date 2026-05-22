@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  static const String baseUrl = 'https://demo-adr.monitoring4system.com';
   static const String mobilePrefix = '/api/mobile';
 
   static const String login = '$mobilePrefix/login';
@@ -9,6 +9,7 @@ class ApiConstants {
   static const String info = '$mobilePrefix/info';
 
   static const String loggers = '/api/loggers';
+  static String loggerDetail(String idLogger) => '/api/loggers/$idLogger';
   static const String logKontrol = '/api/log-kontrol';
   static const String deformasi = '/api/deformasi';
   static const String sensorData = '/api/sensor-data';

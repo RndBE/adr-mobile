@@ -40,8 +40,23 @@ class PetaRepository {
 
   Future<List<PetaMarker>> getMarkers() async {
     try {
-      final res = await _client.get(ApiConstants.prismaData);
-      final list = res.data as List<dynamic>? ?? [];
+      final logRes = await _client.get(
+        ApiConstants.logKontrol,
+        params: {'limit': 30, 'with_prisma': false},
+      );
+      final logs = _client.unwrapList(logRes);
+      if (logs.isEmpty) return [];
+
+      final latestLog = logs.first as Map<String, dynamic>;
+      final idLog = latestLog['id_log']?.toString();
+      if (idLog == null || idLog.isEmpty) return [];
+
+      final res = await _client.get(
+        ApiConstants.deformasi,
+        params: {'id_log': idLog},
+      );
+      final data = _client.unwrapMap(res);
+      final list = data?['data_pengukuran'] as List<dynamic>? ?? const [];
       return list
           .where((e) {
             final m = e as Map<String, dynamic>;

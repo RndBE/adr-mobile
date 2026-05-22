@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../shared/theme/app_theme.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../data/monitoring_repository.dart';
 
 class MonitoringScreen extends StatefulWidget {
@@ -88,11 +89,17 @@ class _MonitoringScreenState extends State<MonitoringScreen>
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white60,
           tabs: _tabs
-              .map((t) => Tab(
-                    child: Text(t.label,
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600)),
-                  ))
+              .map(
+                (t) => Tab(
+                  child: Text(
+                    t.label,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              )
               .toList(),
         ),
       ),
@@ -104,15 +111,19 @@ class _MonitoringScreenState extends State<MonitoringScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today_rounded,
-                    size: 16, color: AppColors.primary),
+                const Icon(
+                  Icons.calendar_today_rounded,
+                  size: 16,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   DateFormat('dd MMMM yyyy', 'id_ID').format(_selectedDate),
                   style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: AppColors.textPrimary),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const Spacer(),
                 TextButton.icon(
@@ -120,8 +131,9 @@ class _MonitoringScreenState extends State<MonitoringScreen>
                   icon: const Icon(Icons.edit_calendar_rounded, size: 16),
                   label: const Text('Ganti Tanggal'),
                   style: TextButton.styleFrom(
-                      foregroundColor: AppColors.primary,
-                      textStyle: const TextStyle(fontSize: 13)),
+                    foregroundColor: AppColors.primary,
+                    textStyle: const TextStyle(fontSize: 13),
+                  ),
                 ),
               ],
             ),
@@ -134,9 +146,13 @@ class _MonitoringScreenState extends State<MonitoringScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                const Text('Intensitas:',
-                    style: TextStyle(
-                        fontSize: 11, color: AppColors.textSecondary)),
+                const Text(
+                  'Intensitas:',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 ...[
                   ('Tidak ada', Colors.grey.shade200),
@@ -144,21 +160,24 @@ class _MonitoringScreenState extends State<MonitoringScreen>
                   ('Sedang', const Color(0xFF64B5F6)),
                   ('Deras', const Color(0xFF1565C0)),
                   ('Sangat deras', const Color(0xFF0D0D5F)),
-                ].map((e) => Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Row(children: [
-                        Container(
-                          width: 12,
-                          height: 12,
-                          color: e.$2,
-                        ),
+                ].map(
+                  (e) => Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Row(
+                      children: [
+                        Container(width: 12, height: 12, color: e.$2),
                         const SizedBox(width: 3),
-                        Text(e.$1,
-                            style: const TextStyle(
-                                fontSize: 9,
-                                color: AppColors.textSecondary)),
-                      ]),
-                    )),
+                        Text(
+                          e.$1,
+                          style: const TextStyle(
+                            fontSize: 9,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -167,11 +186,10 @@ class _MonitoringScreenState extends State<MonitoringScreen>
           // Heatmap content
           Expanded(
             child: _loading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary))
+                ? const SkeletonHeatmap()
                 : _rows.isEmpty
-                    ? _buildEmpty()
-                    : _buildHeatmap(),
+                ? _buildEmpty()
+                : _buildHeatmap(),
           ),
         ],
       ),
@@ -198,31 +216,31 @@ class _MonitoringScreenState extends State<MonitoringScreen>
               const SizedBox(height: 4),
 
               // Rows
-              ..._rows.map((row) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 70,
-                          child: Text(
-                            row.tanggal.length >= 10
-                                ? row.tanggal.substring(5)
-                                : row.tanggal,
-                            style: const TextStyle(
-                                fontSize: 11,
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w500),
+              ..._rows.map(
+                (row) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 70,
+                        child: Text(
+                          row.tanggal.length >= 10
+                              ? row.tanggal.substring(5)
+                              : row.tanggal,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        ...row.cells.map(
-                          (cell) => _HeatCell(
-                            cell: cell,
-                            color: tab.color,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
+                      ),
+                      ...row.cells.map(
+                        (cell) => _HeatCell(cell: cell, color: tab.color),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -237,9 +255,10 @@ class _MonitoringScreenState extends State<MonitoringScreen>
         children: [
           Icon(Icons.grid_off_rounded, size: 56, color: Colors.grey.shade300),
           const SizedBox(height: 16),
-          const Text('Tidak ada data untuk tanggal ini',
-              style:
-                  TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+          const Text(
+            'Tidak ada data untuk tanggal ini',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          ),
         ],
       ),
     );
@@ -265,9 +284,10 @@ class _HourHeader extends StatelessWidget {
         '$hour',
         textAlign: TextAlign.center,
         style: const TextStyle(
-            fontSize: 9,
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w500),
+          fontSize: 9,
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -291,7 +311,9 @@ class _HeatCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: cell.value < 0 ? 'Tidak ada data' : cell.value.toStringAsFixed(1),
+      message: cell.value < 0
+          ? 'Tidak ada data'
+          : cell.value.toStringAsFixed(1),
       child: Container(
         width: 26,
         height: 26,

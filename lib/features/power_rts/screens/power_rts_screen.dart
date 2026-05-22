@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 import '../../../shared/theme/app_theme.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../../analisa/data/analisa_repository.dart';
 
 class PowerRtsScreen extends StatefulWidget {
@@ -18,8 +19,18 @@ class _PowerRtsScreenState extends State<PowerRtsScreen> {
   static const _params = [
     _ParamCfg('Power RTS', 'sensor23', Icons.bolt_rounded, AppColors.accent),
     _ParamCfg('Humidity', 'sensor20', Icons.water_drop_rounded, AppColors.info),
-    _ParamCfg('Battery', 'sensor21', Icons.battery_charging_full_rounded, AppColors.success),
-    _ParamCfg('Temperatur', 'sensor22', Icons.thermostat_rounded, AppColors.danger),
+    _ParamCfg(
+      'Battery',
+      'sensor21',
+      Icons.battery_charging_full_rounded,
+      AppColors.success,
+    ),
+    _ParamCfg(
+      'Temperatur',
+      'sensor22',
+      Icons.thermostat_rounded,
+      AppColors.danger,
+    ),
   ];
 
   static const _periods = ['Hari', 'Bulan', 'Tahun'];
@@ -101,9 +112,11 @@ class _PowerRtsScreenState extends State<PowerRtsScreen> {
                           label: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(p.icon,
-                                  size: 13,
-                                  color: sel ? Colors.white : p.color),
+                              Icon(
+                                p.icon,
+                                size: 13,
+                                color: sel ? Colors.white : p.color,
+                              ),
                               const SizedBox(width: 4),
                               Text(p.label),
                             ],
@@ -156,22 +169,28 @@ class _PowerRtsScreenState extends State<PowerRtsScreen> {
                       onTap: _pickDate,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primarySurface,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.calendar_today_rounded,
-                                size: 13, color: AppColors.primary),
+                            const Icon(
+                              Icons.calendar_today_rounded,
+                              size: 13,
+                              color: AppColors.primary,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               DateFormat('dd/MM/yyyy').format(_date),
                               style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                              ),
                             ),
                           ],
                         ),
@@ -186,12 +205,10 @@ class _PowerRtsScreenState extends State<PowerRtsScreen> {
 
           Expanded(
             child: _loading
-                ? const Center(
-                    child:
-                        CircularProgressIndicator(color: AppColors.primary))
+                ? const SkeletonAnalysisPage()
                 : _stats == null
-                    ? _buildEmpty()
-                    : _buildContent(param),
+                ? _buildEmpty()
+                : _buildContent(param),
           ),
         ],
       ),
@@ -227,13 +244,19 @@ class _PowerRtsScreenState extends State<PowerRtsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(children: [
-                  Icon(param.icon, color: param.color, size: 16),
-                  const SizedBox(width: 8),
-                  Text(param.label,
+                Row(
+                  children: [
+                    Icon(param.icon, color: param.color, size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      param.label,
                       style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 14)),
-                ]),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 16),
                 SizedBox(
                   height: 220,
@@ -242,12 +265,16 @@ class _PowerRtsScreenState extends State<PowerRtsScreen> {
                     primaryXAxis: DateTimeAxis(
                       dateFormat: DateFormat('dd/MM HH:mm'),
                       labelStyle: const TextStyle(
-                          fontSize: 9, color: AppColors.textSecondary),
+                        fontSize: 9,
+                        color: AppColors.textSecondary,
+                      ),
                       majorGridLines: const MajorGridLines(width: 0),
                     ),
                     primaryYAxis: NumericAxis(
                       labelStyle: const TextStyle(
-                          fontSize: 9, color: AppColors.textSecondary),
+                        fontSize: 9,
+                        color: AppColors.textSecondary,
+                      ),
                       majorGridLines: MajorGridLines(
                         color: AppColors.divider.withValues(alpha: 0.5),
                         width: 1,
@@ -263,6 +290,7 @@ class _PowerRtsScreenState extends State<PowerRtsScreen> {
                     series: [
                       AreaSeries<SensorPoint, DateTime>(
                         dataSource: s.points,
+                        animationDuration: 0,
                         xValueMapper: (p, _) => p.waktu,
                         yValueMapper: (p, _) => p.nilai,
                         color: param.color.withValues(alpha: 0.12),
@@ -271,6 +299,7 @@ class _PowerRtsScreenState extends State<PowerRtsScreen> {
                       ),
                       LineSeries<SensorPoint, DateTime>(
                         dataSource: s.points,
+                        animationDuration: 0,
                         xValueMapper: (p, _) => p.waktu,
                         yValueMapper: (_, _) => s.avg,
                         color: AppColors.primary.withValues(alpha: 0.4),
@@ -295,8 +324,10 @@ class _PowerRtsScreenState extends State<PowerRtsScreen> {
         children: [
           Icon(Icons.bolt_outlined, size: 56, color: AppColors.textHint),
           SizedBox(height: 16),
-          Text('Tidak ada data untuk periode ini',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+          Text(
+            'Tidak ada data untuk periode ini',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          ),
         ],
       ),
     );
@@ -329,15 +360,22 @@ class _SummaryCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(label,
-                style:
-                    const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text(value,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: color)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),

@@ -14,6 +14,7 @@ import 'features/monitoring/screens/monitoring_screen.dart';
 import 'features/hasil_pengukuran/screens/hasil_pengukuran_screen.dart';
 import 'features/hasil_pengukuran/screens/detail_hasil_screen.dart';
 import 'features/analisa/screens/analisa_screen.dart';
+import 'features/adr/screens/adr_screen.dart';
 import 'features/peta/screens/peta_screen.dart';
 import 'features/kontrol_adr/screens/kontrol_adr_screen.dart';
 import 'features/visualisasi/screens/visualisasi_3d_screen.dart';
@@ -59,7 +60,19 @@ final _router = GoRouter(
         );
       },
     ),
-    GoRoute(path: '/analisa', builder: (_, _) => const AnalisaScreen()),
+    GoRoute(
+      path: '/analisa',
+      builder: (_, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        return AnalisaScreen(
+          mode: extra?['mode']?.toString(),
+          initialParamKey: extra?['param']?.toString(),
+          prismaName: extra?['prismaName']?.toString(),
+          initialDate: extra?['date']?.toString(),
+        );
+      },
+    ),
+    GoRoute(path: '/adr', builder: (_, _) => const AdrScreen()),
     GoRoute(path: '/peta', builder: (_, _) => const PetaScreen()),
     GoRoute(path: '/kontrol-adr', builder: (_, _) => const KontrolAdrScreen()),
     GoRoute(
@@ -106,12 +119,14 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _scale = Tween<double>(begin: 0.6, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut),
-    );
-    _fade = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: const Interval(0.0, 0.5)),
-    );
+    _scale = Tween<double>(
+      begin: 0.6,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.elasticOut));
+    _fade = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: const Interval(0.0, 0.5)));
     _ctrl.forward();
     _init();
   }

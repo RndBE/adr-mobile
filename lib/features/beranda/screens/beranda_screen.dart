@@ -1,10 +1,19 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
-import '../../../shared/theme/app_theme.dart';
 import '../../../core/storage/secure_storage.dart';
+import '../../../shared/theme/app_theme.dart';
+import '../../../shared/widgets/dashboard_widgets.dart';
+import '../../../shared/widgets/fixed_pinned_header_delegate.dart';
+import '../../../shared/widgets/skeleton.dart';
 import '../data/beranda_repository.dart';
+import '../models/beranda_dashboard_status.dart';
+import '../models/beranda_header_layout.dart';
+import '../models/beranda_metric_formatter.dart';
+import '../widgets/rts_status_summary_card.dart';
 
 class BerandaScreen extends StatefulWidget {
   const BerandaScreen({super.key});
@@ -17,20 +26,41 @@ class _BerandaScreenState extends State<BerandaScreen> {
   final _repo = BerandaRepository();
 
   RtsTempData? _rtsData;
-  List<PrismaLatest> _prismaList = [];
-  bool _loading = true;
   String _username = '';
   String _nama = '';
+  String _level = '';
+  bool _loadingDashboard = true;
   Timer? _refreshTimer;
 
   static const _menus = [
-    _MenuData('Monitoring', Icons.grid_view_rounded, '/monitoring', AppColors.primary),
-    _MenuData('Hasil Ukur', Icons.table_chart_rounded, '/hasil-pengukuran', AppColors.primaryLight),
-    _MenuData('Analisa', Icons.show_chart_rounded, '/analisa', AppColors.info),
-    _MenuData('Peta', Icons.map_rounded, '/peta', AppColors.success),
-    _MenuData('Kontrol ADR', Icons.settings_remote_rounded, '/kontrol-adr', AppColors.accent),
-    _MenuData('Visualisasi 3D', Icons.view_in_ar_rounded, '/visualisasi-3d', Color(0xFF7B1FA2)),
-    _MenuData('Power RTS', Icons.bolt_rounded, '/power-rts', AppColors.warning),
+    _MenuData(
+      'Hasil Ukur',
+      Icons.query_stats_rounded,
+      '/hasil-pengukuran',
+      AppColors.primaryLight,
+      'Riwayat pengukuran',
+    ),
+    _MenuData(
+      'ADR',
+      Icons.radar_rounded,
+      '/adr',
+      AppColors.info,
+      'Data prism dan RTS',
+    ),
+    _MenuData(
+      'Peta',
+      Icons.location_on_rounded,
+      '/peta',
+      AppColors.success,
+      'Lokasi prism',
+    ),
+    _MenuData(
+      'Kontrol ADR',
+      Icons.settings_remote_rounded,
+      '/kontrol-adr',
+      AppColors.accent,
+      'Power dan ukur',
+    ),
   ];
 
   @override
@@ -47,46 +77,117 @@ class _BerandaScreenState extends State<BerandaScreen> {
   Future<void> _loadUser() async {
     final username = await SecureStorage.getUsername();
     final nama = await SecureStorage.getNama();
-    if (mounted) {
-      setState(() {
-        _username = username ?? '';
-        _nama = nama ?? '';
-      });
-    }
+    final level = await SecureStorage.getLevel();
+    if (!mounted) return;
+    setState(() {
+      _username = username ?? '';
+      _nama = nama ?? '';
+      _level = level ?? '';
+    });
   }
 
   Future<void> _fetchData() async {
-    final results = await Future.wait([
-      _repo.getRtsTempData(),
-      _repo.getPrismaLatest(),
-    ]);
+    final rtsData = await _repo.getRtsTempData();
     if (!mounted) return;
     setState(() {
-      _rtsData = results[0] as RtsTempData?;
-      _prismaList = results[1] as List<PrismaLatest>;
-      _loading = false;
+      _rtsData = rtsData;
+      _loadingDashboard = false;
     });
   }
 
   Future<void> _logout() async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Keluar?',
-            style: TextStyle(fontWeight: FontWeight.w700)),
-        content: const Text('Anda akan keluar dari sesi ini.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.danger.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.logout_rounded,
+                  color: AppColors.danger,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Keluar Aplikasi?',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Apakah Anda yakin ingin keluar dari sesi ini? Anda perlu login kembali untuk masuk.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        side: BorderSide(
+                          color: AppColors.textHint.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      child: const Text(
+                        'Batal',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: AppColors.danger,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Keluar',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-            child: const Text('Keluar'),
-          ),
-        ],
+        ),
       ),
     );
     if (ok == true) {
@@ -102,235 +203,153 @@ class _BerandaScreenState extends State<BerandaScreen> {
     super.dispose();
   }
 
+  String _formatLevel(String level) {
+    final normalized = level.trim().toLowerCase();
+    if (normalized.isEmpty) return 'User';
+    if (normalized == 'superadmin') return 'Super Admin';
+    return normalized
+        .replaceAll('_', ' ')
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' ');
+  }
+
+  String get _displayName {
+    if (_nama.trim().isNotEmpty) return _nama.trim();
+    if (_username.trim().isNotEmpty) return _username.trim();
+    return 'User';
+  }
+
+  String _metric(double value, {int fraction = 1}) {
+    return value == 0 ? '-' : value.toStringAsFixed(fraction);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isOnline = _rtsData?.isOnline ?? false;
-    final isRunning = _rtsData?.isRunning ?? false;
+    final rts = _rtsData;
+    final isOnline = rts?.isOnline ?? false;
+    final isRunning = rts?.isRunning ?? false;
+    final rtsStatus = BerandaDashboardStatus.fromState(
+      isRtsPowered: isOnline,
+      isRunning: isRunning,
+    );
+    final loggerStatus = BerandaDashboardStatus.loggerFromState(
+      isLoggerOnline: rts?.isLoggerOnline ?? false,
+    );
+    final dateText = DateFormat(
+      'EEEE, d MMMM yyyy',
+      'id_ID',
+    ).format(DateTime.now());
+    final headerHeight = berandaHeaderHeight(MediaQuery.paddingOf(context).top);
 
     return Scaffold(
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: _fetchData,
         child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // ── Header ────────────────────────────────────────────
-            SliverAppBar(
-              expandedHeight: 160,
+            SliverPersistentHeader(
               pinned: true,
-              backgroundColor: AppColors.primary,
-              automaticallyImplyLeading: false,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout_rounded, color: Colors.white),
-                  onPressed: _logout,
-                ),
-              ],
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.primaryDark, AppColors.primary],
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(Icons.radar_rounded,
-                                    color: Colors.white, size: 22),
-                              ),
-                              const SizedBox(width: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('ADR Monitor',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700)),
-                                  Text(
-                                    _nama.isNotEmpty ? _nama : _username,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.7),
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Spacer(),
-                              // RTS status badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: isOnline
-                                      ? AppColors.success.withValues(alpha: 0.2)
-                                      : AppColors.danger.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: isOnline
-                                        ? AppColors.success.withValues(alpha: 0.5)
-                                        : AppColors.danger.withValues(alpha: 0.5),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _PulseDot(color: isOnline
-                                        ? AppColors.success
-                                        : AppColors.danger),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      isRunning
-                                          ? 'Running'
-                                          : isOnline
-                                              ? 'Online'
-                                              : 'Offline',
-                                      style: TextStyle(
-                                        color: isOnline
-                                            ? AppColors.success
-                                            : AppColors.danger,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+              delegate: FixedPinnedHeaderDelegate(
+                height: headerHeight,
+                child: _DashboardHeader(
+                  name: _displayName,
+                  role: _formatLevel(_level),
+                  dateText: dateText,
+                  status: loggerStatus,
+                  onLogout: _logout,
                 ),
               ),
             ),
-
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── RTS Metric Cards ───────────────────────────
-                    _loading
-                        ? _MetricShimmer()
-                        : GridView.count(
-                            crossAxisCount: 2,
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 2.0,
-                            children: [
-                              _MetricCard(
-                                label: 'Power RTS',
-                                value: _rtsData != null
-                                    ? '${_rtsData!.powerRts.toStringAsFixed(1)} V'
-                                    : '-- V',
-                                icon: Icons.bolt_rounded,
-                                color: AppColors.accent,
-                              ),
-                              _MetricCard(
-                                label: 'Humidity',
-                                value: _rtsData != null
-                                    ? '${_rtsData!.humidity.toStringAsFixed(1)}%'
-                                    : '--%',
-                                icon: Icons.water_drop_rounded,
-                                color: AppColors.info,
-                              ),
-                              _MetricCard(
-                                label: 'Battery',
-                                value: _rtsData != null
-                                    ? '${_rtsData!.battery.toStringAsFixed(1)} V'
-                                    : '-- V',
-                                icon: Icons.battery_charging_full_rounded,
-                                color: AppColors.success,
-                              ),
-                              _MetricCard(
-                                label: 'Temperatur',
-                                value: _rtsData != null
-                                    ? '${_rtsData!.temperature.toStringAsFixed(1)}°C'
-                                    : '--°C',
-                                icon: Icons.thermostat_rounded,
-                                color: AppColors.danger,
-                              ),
-                            ],
+                    if (_loadingDashboard && rts == null)
+                      const SkeletonBerandaPage()
+                    else if (rts == null)
+                      const EmptyPanel(
+                        title: 'Data RTS belum tersedia',
+                        message:
+                            'Tarik ke bawah untuk memuat ulang status perangkat.',
+                        icon: Icons.radar_rounded,
+                      )
+                    else ...[
+                      RtsStatusSummaryCard(
+                        status: rtsStatus,
+                        waktu: rts.waktu,
+                        tiltXText: _metric(rts.tiltX, fraction: 2),
+                        tiltYText: _metric(rts.tiltY, fraction: 2),
+                      ),
+                      const SizedBox(height: 14),
+                      GridView.count(
+                        padding: EdgeInsets.zero,
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.28,
+                        children: [
+                          MetricTile(
+                            label: 'Humidity',
+                            value: formatBerandaSensorMetric(rts.humidity),
+                            unit: '%',
+                            icon: Icons.water_drop_outlined,
+                            color: AppColors.info,
                           ),
-
-                    const SizedBox(height: 20),
-
-                    // ── Menu Grid ─────────────────────────────────
-                    const Text('Menu',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary)),
+                          MetricTile(
+                            label: 'Battery',
+                            value: formatBerandaSensorMetric(rts.battery),
+                            unit: 'Volt',
+                            icon: Icons.battery_full_rounded,
+                            color: AppColors.success,
+                          ),
+                          MetricTile(
+                            label: 'Temperature',
+                            value: formatBerandaSensorMetric(rts.temperature),
+                            unit: 'C',
+                            icon: Icons.thermostat_rounded,
+                            color: AppColors.danger,
+                          ),
+                          MetricTile(
+                            label: 'Power RTS',
+                            value: formatBerandaSensorMetric(rts.powerRts),
+                            unit: 'Volt',
+                            icon: Icons.bolt_rounded,
+                            color: AppColors.accent,
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 22),
+                    const _SectionHeader(
+                      title: 'Menu Utama',
+                      subtitle: 'Akses fitur monitoring ADR',
+                    ),
                     const SizedBox(height: 12),
                     GridView.count(
-                      crossAxisCount: 3,
+                      padding: EdgeInsets.zero,
+                      crossAxisCount: 2,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 0.9,
+                      childAspectRatio: 1.72,
                       children: _menus
-                          .map((m) => _MenuCard(
-                                data: m,
-                                onTap: () => context.push(m.route),
-                              ))
+                          .map(
+                            (menu) => _MenuCard(
+                              data: menu,
+                              onTap: () => context.push(menu.route),
+                            ),
+                          )
                           .toList(),
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // ── Prism Terbaru ──────────────────────────────
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Data Prism Terbaru',
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary)),
-                        TextButton(
-                          onPressed: () => context.push('/hasil-pengukuran'),
-                          child: const Text('Lihat Semua',
-                              style: TextStyle(
-                                  color: AppColors.primary, fontSize: 13)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _loading
-                        ? _PrismaShimmer()
-                        : _prismaList.isEmpty
-                            ? _EmptyState(
-                                icon: Icons.scatter_plot_outlined,
-                                label: 'Belum ada data prism',
-                              )
-                            : Column(
-                                children: _prismaList
-                                    .take(5)
-                                    .map((p) => _PrismaTile(prisma: p))
-                                    .toList(),
-                              ),
-
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 48),
                   ],
                 ),
               ),
@@ -342,104 +361,183 @@ class _BerandaScreenState extends State<BerandaScreen> {
   }
 }
 
-// ─── Widgets ─────────────────────────────────────────────────────────────────
+class _DashboardHeader extends StatelessWidget {
+  final String name;
+  final String role;
+  final String dateText;
+  final BerandaDashboardStatus status;
+  final VoidCallback onLogout;
 
-class _PulseDot extends StatefulWidget {
-  final Color color;
-  const _PulseDot({required this.color});
-
-  @override
-  State<_PulseDot> createState() => _PulseDotState();
-}
-
-class _PulseDotState extends State<_PulseDot>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _ctrl;
-  late Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.4, end: 1.0).animate(_ctrl);
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _anim,
-      child: Container(
-        width: 7,
-        height: 7,
-        decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
-      ),
-    );
-  }
-}
-
-class _MetricCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _MetricCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
+  const _DashboardHeader({
+    required this.name,
+    required this.role,
+    required this.dateText,
+    required this.status,
+    required this.onLogout,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: cardShadow,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primaryDark, AppColors.primary],
+        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: color, size: 20),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 22),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.20),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.radar_rounded,
+                      color: Colors.white,
+                      size: 25,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Selamat Datang',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.72),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.22),
+                        ),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.logout_rounded,
+                      color: Colors.white,
+                      size: 21,
+                    ),
+                    onPressed: onLogout,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  StatusPill(
+                    label: status.label,
+                    color: status.color,
+                    icon: status.icon,
+                  ),
+                  StatusPill(
+                    label: role,
+                    color: Colors.white,
+                    icon: Icons.verified_user_outlined,
+                    subtle: true,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    color: Colors.white.withValues(alpha: 0.78),
+                    size: 14,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      dateText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppColors.textSecondary)),
-                const SizedBox(height: 2),
-                Text(value,
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: color),
-                    overflow: TextOverflow.ellipsis),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _SectionHeader({required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -449,217 +547,61 @@ class _MenuData {
   final IconData icon;
   final String route;
   final Color color;
-  const _MenuData(this.label, this.icon, this.route, this.color);
+  final String subtitle;
+
+  const _MenuData(this.label, this.icon, this.route, this.color, this.subtitle);
 }
 
 class _MenuCard extends StatelessWidget {
   final _MenuData data;
   final VoidCallback onTap;
+
   const _MenuCard({required this.data, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return AppSurfaceCard(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: cardShadow,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: data.color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(data.icon, color: data.color, size: 26),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              data.label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PrismaTile extends StatelessWidget {
-  final PrismaLatest prisma;
-  const _PrismaTile({required this.prisma});
-
-  Color get _statusColor {
-    switch (prisma.status) {
-      case 'success':
-        return AppColors.success;
-      case 'failed':
-        return AppColors.danger;
-      case 'running':
-        return AppColors.running;
-      default:
-        return AppColors.textHint;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: cardShadow,
-      ),
+      padding: const EdgeInsets.all(13),
       child: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: _statusColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(Icons.my_location_rounded,
-                color: _statusColor, size: 18),
-          ),
-          const SizedBox(width: 12),
+          MenuIconBadge(icon: data.icon, color: data.color),
+          const SizedBox(width: 11),
           Expanded(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(prisma.nama,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: AppColors.textPrimary)),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    _CoordChip('N', prisma.n),
-                    const SizedBox(width: 6),
-                    _CoordChip('E', prisma.e),
-                    const SizedBox(width: 6),
-                    _CoordChip('Z', prisma.z),
-                  ],
+                Text(
+                  data.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  data.subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: _statusColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              prisma.status.toUpperCase(),
-              style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: _statusColor),
-            ),
+          const SizedBox(width: 6),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: data.color.withValues(alpha: 0.55),
+            size: 18,
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CoordChip extends StatelessWidget {
-  final String label;
-  final double value;
-  const _CoordChip(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: AppColors.primarySurface,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        '$label: ${value.toStringAsFixed(3)}',
-        style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w600,
-            color: AppColors.primary),
-      ),
-    );
-  }
-}
-
-class _MetricShimmer extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 2.0,
-      children: List.generate(
-        4,
-        (_) => Container(
-          decoration: BoxDecoration(
-            color: AppColors.shimmerBase,
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _PrismaShimmer extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(
-        3,
-        (_) => Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          height: 68,
-          decoration: BoxDecoration(
-            color: AppColors.shimmerBase,
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _EmptyState({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      child: Column(
-        children: [
-          Icon(icon, size: 48, color: AppColors.textHint),
-          const SizedBox(height: 12),
-          Text(label,
-              style: const TextStyle(
-                  color: AppColors.textSecondary, fontSize: 14)),
         ],
       ),
     );

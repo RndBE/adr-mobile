@@ -38,6 +38,24 @@ class ApiClient {
       _dio.put(path, data: data);
 
   Future<Response> delete(String path) => _dio.delete(path);
+
+  dynamic unwrap(Response response) {
+    final data = response.data;
+    if (data is Map<String, dynamic> && data.containsKey('data')) {
+      return data['data'];
+    }
+    return data;
+  }
+
+  List<dynamic> unwrapList(Response response) {
+    final data = unwrap(response);
+    return data is List<dynamic> ? data : const [];
+  }
+
+  Map<String, dynamic>? unwrapMap(Response response) {
+    final data = unwrap(response);
+    return data is Map<String, dynamic> ? data : null;
+  }
 }
 
 class _AuthInterceptor extends Interceptor {
